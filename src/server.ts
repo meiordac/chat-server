@@ -2,7 +2,8 @@ import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
 
-import { Message } from './model/message';
+import { ChatMessage } from './model/message';
+import { User } from './model/user';
 
 export class ChatServer {
     public static readonly PORT:number = 8080;
@@ -10,6 +11,7 @@ export class ChatServer {
     private server: Server;
     private io: socketIo.Server;
     private port: string | number;
+    private users: User[] = [];
 
     constructor() {
         this.createApp();
@@ -36,19 +38,26 @@ export class ChatServer {
     }
 
     private listen(): void {
+
         this.server.listen(this.port, () => {
-            console.log('Running server on port %s', this.port);
+            console.log('Server listening on port %s', this.port);
         });
 
         this.io.on('connect', (socket: any) => {
-            console.log('Connected client on port %s.', this.port);
-            socket.on('message', (m: Message) => {
-                console.log('[server](message): %s', JSON.stringify(m));
-                this.io.emit('message', m);
+            socket.broadcast.emit('join', 'Someone joined the room');
+            console.log('Client connected on port %s.', this.port);
+
+            socket.on('message', (message: any) => {
+                console.log('[server](message): %s', JSON.stringify(message));
+                if(this.users.indexOf(message.from) !== -1) {
+                    this.users.push(message.from);
+                    this.io.emit('users', this.users);
+                }
+                this.io.emit('message', message);
             });
 
             socket.on('disconnect', () => {
-                console.log('Client disconnected');
+                console.log('Client disconnected on port %s.', this.port);
             });
         });
     }
