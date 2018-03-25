@@ -47,6 +47,16 @@ export class ChatServer {
             socket.broadcast.emit('join', 'Someone joined the room');
             console.log('Client connected on port %s.', this.port);
 
+            socket.on('rename', (data: any) => {
+                console.log('user renamed %s', data);
+            }
+        );
+        
+            socket.on('join', (data: any) => {
+                console.log('user joined %s', data);
+            }
+        );
+
             socket.on('message', (message: any) => {
                 console.log('[server](message): %s', JSON.stringify(message));
                 if(this.users.indexOf(message.from) !== -1) {
