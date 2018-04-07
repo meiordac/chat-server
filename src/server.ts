@@ -1,78 +1,79 @@
-import { createServer, Server } from 'http';
-import * as express from 'express';
-import * as socketIo from 'socket.io';
+import { createServer, Server } from "http";
+import * as express from "express";
+import * as socketIo from "socket.io";
 
-import { ChatMessage } from './model/message';
-import { User } from './model/user';
+import { ChatMessage } from "./model/message";
+import { User } from "./model/user";
 
 export class ChatServer {
-    public static readonly PORT:number = 8080;
-    private app: express.Application;
-    private server: Server;
-    private io: socketIo.Server;
-    private port: string | number;
-    private users: User[] = [];
+  public static readonly PORT: number = 8080;
+  private app: express.Application;
+  private server: Server;
+  private io: socketIo.Server;
+  private port: string | number;
+  private users: string[] = [];
 
-    constructor() {
-        this.createApp();
-        this.config();
-        this.createServer();
-        this.sockets();
-        this.listen();
-    }
+  constructor() {
+    this.createApp();
+    this.config();
+    this.createServer();
+    this.sockets();
+    this.listen();
+  }
 
-    private createApp(): void {
-        this.app = express();
-    }
+  private createApp(): void {
+    this.app = express();
+  }
 
-    private createServer(): void {
-        this.server = createServer(this.app);
-    }
+  private createServer(): void {
+    this.server = createServer(this.app);
+  }
 
-    private config(): void {
-        this.port = process.env.PORT || ChatServer.PORT;
-    }
+  private config(): void {
+    this.port = process.env.PORT || ChatServer.PORT;
+  }
 
-    private sockets(): void {
-        this.io = socketIo(this.server);
-    }
+  private sockets(): void {
+    this.io = socketIo(this.server);
+  }
 
-    private listen(): void {
+  private listen(): void {
+    this.server.listen(this.port, () => {
+      console.log("Server listening on port %s", this.port);
+    });
 
-        this.server.listen(this.port, () => {
-            console.log('Server listening on port %s', this.port);
-        });
+    this.io.on("connect", (socket: any) => {
+      socket.broadcast.emit("join", "Someone joined the room");
+      console.log("Client connected on port %s.", this.port);
 
-        this.io.on('connect', (socket: any) => {
-            socket.broadcast.emit('join', 'Someone joined the room');
-            console.log('Client connected on port %s.', this.port);
+      socket.on("rename", (data: any) => {
+        console.log("[server](rename) user renamed %s", JSON.stringify(data));
+        const index = this.users.indexOf(data.content.previousUsername);
+        console.log(this.users);
+        if (index !== -1) {
+          this.users[index] = data.content.username;
+          this.io.emit("users", this.users);
+        }
+      });
 
-            socket.on('rename', (data: any) => {
-                console.log('user renamed %s', data);
-            }
-        );
-        
-            socket.on('join', (data: any) => {
-                console.log('user joined %s', data);
-            }
-        );
+      socket.on("join", (data: any) => {
+        console.log("[server](join) %s joined", JSON.stringify(data));
+        this.users.push(data.name);
+        this.io.emit("users", this.users);
+      });
 
-            socket.on('message', (message: any) => {
-                console.log('[server](message): %s', JSON.stringify(message));
-                if(this.users.indexOf(message.from) !== -1) {
-                    this.users.push(message.from);
-                    this.io.emit('users', this.users);
-                }
-                this.io.emit('message', message);
-            });
+      socket.on("message", (message: any) => {
+        console.log("[server](message): %s", JSON.stringify(message));
+        this.io.emit("message", message);
+      });
 
-            socket.on('disconnect', () => {
-                console.log('Client disconnected on port %s.', this.port);
-            });
-        });
-    }
+      socket.on("disconnect", () => {
+        console.log("Client disconnected on port %s.", this.port);
+      });
+    });
+  }
 
-    public getApp(): express.Application {
-        return this.app;
-    }
+  public getApp(): express.Application {
+    return this.app;
+  }
 }
