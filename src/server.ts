@@ -11,7 +11,7 @@ export class ChatServer {
   private server: Server;
   private io: socketIo.Server;
   private port: string | number;
-  private users: string[] = [];
+  private users: User[] = [];
 
   constructor() {
     this.createApp();
@@ -44,21 +44,23 @@ export class ChatServer {
 
     this.io.on("connect", (socket: any) => {
       socket.broadcast.emit("join", "Someone joined the room");
-      console.log("Client connected on port %s.", this.port);
+      console.log(`Client ${socket.id} connected on port ${this.port}.`);
 
       socket.on("rename", (data: any) => {
         console.log("[server](rename) user renamed %s", JSON.stringify(data));
-        const index = this.users.indexOf(data.content.previousUsername);
-        console.log(this.users);
+        const index = this.users.findIndex(
+          user => user.id === data.user.id
+        );
         if (index !== -1) {
-          this.users[index] = data.content.username;
+          this.users[index].name = data.user.name;
           this.io.emit("users", this.users);
         }
       });
 
       socket.on("join", (data: any) => {
         console.log("[server](join) %s joined", JSON.stringify(data));
-        this.users.push(data.name);
+        socket.emit("id", socket.id);
+        this.users.push({ id: socket.id, name: data.from.name });
         this.io.emit("users", this.users);
       });
 
@@ -68,7 +70,12 @@ export class ChatServer {
       });
 
       socket.on("disconnect", () => {
-        console.log("Client disconnected on port %s.", this.port);
+        console.log(`Client ${socket.id} disconnected on port ${this.port}.`);
+        const index = this.users.findIndex(user => user.id === socket.id);
+        if (index !== -1) {
+          this.users.splice(index, 1);
+          this.io.emit("users", this.users);
+        }
       });
     });
   }
