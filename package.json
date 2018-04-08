@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "gulp build && node dist/index.js"
+    "start": "gulp build && node dist/index.js"
   },
   "repository": {
     "type": "git",
@@ -34,5 +34,8 @@
     "gulp": "^3.9.1",
     "gulp-typescript": "^4.0.1",
     "typescript": "^2.7.2"
+  },
+  "engines": {
+    "node": "8.9.1"
   }
 }
