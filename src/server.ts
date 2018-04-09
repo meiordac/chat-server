@@ -123,7 +123,7 @@ export class ChatServer {
     socket.on("join", (data: any) => {
       console.log("[server](join) %s joined", JSON.stringify(data));
       socket.emit("id", socket.id);
-      this.users.push({ id: socket.id, name: data.from.name });
+      this.users.push({ id: socket.id, name: data.from.name, image: data.from.image });
       this.io.emit("users", this.users);
     });
   }
