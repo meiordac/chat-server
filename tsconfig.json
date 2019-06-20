@@ -1,10 +1,10 @@
 {
-    "files": [
-      "src/*.ts",
-      "src/model/*.ts"
-    ],
-    "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs",
-    }
+  "files": [
+    "src/*.ts",
+    "src/model/*.ts"
+  ],
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
   }
+}
