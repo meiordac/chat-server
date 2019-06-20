@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "gulp build && node dist/index.js"
+    "start": "gulp build && node dist/index.js",
+    "publish": "git push heroku master"
   },
   "repository": {
     "type": "git",
